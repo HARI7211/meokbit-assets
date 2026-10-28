@@ -10,7 +10,7 @@ window.KM = {
       dt.items.add(new File([buf], name, { type })); }
     const inp = document.querySelectorAll('input[type=file]')[idx]; inp.files = dt.files; inp.dispatchEvent(new Event('change', { bubbles: true })); return dt.files.length; },
   async desc(text) { const ed = document.querySelector('.tiptap.ProseMirror'); ed.focus();
-    const e = ed.editor; const html = text.split('\n').map(l => '<p>' + (l.replace(/&/g,'&amp;').replace(/>/g,'&gt;') || '') + '</p>').join('');
+    const e = ed.editor; const esc = l => l.replace(/&/g,'&amp;').replace(/>/g,'&gt;'); const html = text.split(/\n\s*\n/).map(b => '<p>' + b.split('\n').map(esc).join('<br>') + '</p>').join('');
     if (e) { e.commands.setContent(html, true); return 'editor'; }
     document.execCommand('selectAll'); const dt = new DataTransfer(); dt.setData('text/html', html); dt.setData('text/plain', text);
     ed.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); return 'paste'; },
@@ -20,7 +20,7 @@ window.KM = {
     KM.setv(document.querySelector('textarea[name="TYPE_CONTENTS_LIST_EBOOK.valueData.description"]'), c.toc);
     KM.setv(document.querySelector('textarea[name="PACKAGE_OPTION_GROUP.valueData.packages.0.values.0.packageValue"]'), c.pkg_title);
     KM.setv(document.querySelector('textarea[name="PACKAGE_OPTION_GROUP.valueData.packages.1.values.0.packageValue"]'), c.pkg_desc);
-    const ti = [...document.querySelectorAll('input[type=text]')].filter(x => x.className.includes('cursor-text'));
+    const ti = [...document.querySelectorAll('input[type=text]')].filter(x => x.className.includes('flex-1'));
     KM.setv(ti[0], String(c.pages)); KM.setv(ti[3], String(c.price));
     KM.setv(document.querySelector('textarea[placeholder^="결제 후 안내"]'), c.after);
     const main = document.querySelectorAll('input[type=file]')[0];
