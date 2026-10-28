@@ -28,7 +28,7 @@ window.KM = {
     await KM.S(2500);
     const pv = []; for (let i = 1; i <= c.prev; i++) pv.push(['i/' + code + '_p' + i + '.jpg', code + '_p' + i + '.jpg', 'image/jpeg']);
     log.push('prev ' + await KM.files(B, 3, pv)); await KM.S(4000);
-    if (blob) { log.push('pdf ' + await KM.files(B, 4, [['b/' + blob + '.bin', fname, 'application/pdf']], key)); await KM.S(6000); }
+    if (blob) { log.push('pdf ' + await KM.files(B, 4, [['b/' + blob + '.bin', fname, /\.zip$/.test(fname) ? 'application/zip' : 'application/pdf']], key)); await KM.S(6000); }
     return log; }
 };
 
@@ -48,7 +48,7 @@ KM.extras = async () => { const cb = document.querySelector('input[type=checkbox
 KM.save = async () => { [...document.querySelectorAll('button')].find(x => x.innerText.trim() == '임시 저장하기').click();
   for (let i = 0; i < 20; i++) { await KM.S(500); if (document.body.innerText.includes('저장됐어요')) return 'saved'; } return 'nosave'; };
 KM.state = () => { const sec = i => { let p = document.querySelectorAll('input[type=file]')[i]; for (let k = 0; k < 6; k++) p = p.parentElement; return p; };
-  return { main: sec(0).querySelectorAll('img').length, prev: sec(3).querySelectorAll('img').length, pdf: (sec(4).innerText.match(/[^\n]+\.pdf/) || [''])[0],
+  return { main: sec(0).querySelectorAll('img').length, prev: sec(3).querySelectorAll('img').length, pdf: (sec(4).innerText.match(/[^\n]+\.(pdf|zip)/) || [''])[0],
     vals: [...document.querySelectorAll('input[type=text]')].map(x => x.value).join('|'), pkg: document.querySelector('input[type=checkbox]')?.checked,
     fmt: document.getElementById('react-select-gig-metadata-1-input').closest('[class*=-container]').innerText }; };
 KM.create = async (sha, key, code, blob, fname, title) => { const u = await KM.step1(title); const r = await KM.fill(sha, key, code, blob, fname); const pk = await KM.extras(); await KM.S(1000);
