@@ -10,7 +10,7 @@ window.KM = {
       dt.items.add(new File([buf], name, { type })); }
     const inp = document.querySelectorAll('input[type=file]')[idx]; inp.files = dt.files; inp.dispatchEvent(new Event('change', { bubbles: true })); return dt.files.length; },
   async desc(text) { const ed = document.querySelector('.tiptap.ProseMirror'); ed.focus();
-    const e = ed.editor; const esc = l => l.replace(/&/g,'&amp;').replace(/>/g,'&gt;'); const html = text.split(/\n\s*\n/).map(b => '<p>' + b.split('\n').map(esc).join('<br>') + '</p>').join('');
+    const e = ed.editor; const esc = l => l.replace(/&/g,'&amp;').replace(/>/g,'&gt;'); const html = text.split('\n').map(l => '<p>' + esc(l) + '</p>').join('');
     if (e) { e.commands.setContent(html, true); return 'editor'; }
     document.execCommand('selectAll'); const dt = new DataTransfer(); dt.setData('text/html', html); dt.setData('text/plain', text);
     ed.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); return 'paste'; },
@@ -31,4 +31,25 @@ window.KM = {
     if (blob) { log.push('pdf ' + await KM.files(B, 4, [['b/' + blob + '.bin', fname, 'application/pdf']], key)); await KM.S(6000); }
     return log; }
 };
+
+KM.click = el => { el.scrollIntoView({block:'center'}); el.click(); };
+KM.leaf = (root, txt) => [...root.querySelectorAll('*')].find(x => x.children.length == 0 && x.innerText && x.innerText.trim() == txt);
+KM.pick = async (labelTxt, optTxt) => { const b = [...document.querySelectorAll('label')].find(x => x.innerText.includes(labelTxt)).closest('button');
+  b.click(); await KM.S(700); const o = [...document.querySelectorAll('[data-tippy-root]')].map(t => KM.leaf(t, optTxt)).find(Boolean); if (!o) throw 'no opt ' + optTxt; o.click(); await KM.S(700); };
+KM.step1 = async (title) => { const t = document.querySelector('input[placeholder="제목을 입력해 주세요"]'); KM.setv(t, title); await KM.S(400);
+  await KM.pick('1차 카테고리', '전자책'); await KM.pick('2차 카테고리', '취업·시험·자격증 전자책'); await KM.pick('3차 카테고리', '공기업·공공기관 취업 전자책');
+  [...document.querySelectorAll('button')].find(x => x.innerText.trim() == '다음').click();
+  for (let i = 0; i < 30 && !/edit\/\d+/.test(location.href); i++) await KM.S(500); await KM.S(2500); return location.href; };
+KM.extras = async () => { const cb = document.querySelector('input[type=checkbox]'); if (cb && cb.checked) { cb.closest('label,div').click(); await KM.S(600); if (cb.checked) cb.click(); await KM.S(600); }
+  const lab = [...document.querySelectorAll('label,span,div')].find(x => x.children.length <= 1 && /^파일 형식/.test((x.innerText || '').trim()));
+  const btn = lab.closest('button') || lab.parentElement.closest('[class]'); btn.click(); await KM.S(700);
+  const o = [...document.querySelectorAll('div,li,span,button')].find(x => x.children.length == 0 && x.innerText && x.innerText.trim() == 'PDF' && x.getBoundingClientRect().height > 0 && !x.closest('.tiptap')); if (o) o.click(); await KM.S(600); document.body.click(); return cb ? cb.checked : null; };
+KM.save = async () => { [...document.querySelectorAll('button')].find(x => x.innerText.trim() == '임시 저장하기').click();
+  for (let i = 0; i < 20; i++) { await KM.S(500); if (document.body.innerText.includes('저장됐어요')) return 'saved'; } return 'nosave'; };
+KM.state = () => { const sec = i => { let p = document.querySelectorAll('input[type=file]')[i]; for (let k = 0; k < 6; k++) p = p.parentElement; return p; };
+  return { main: sec(0).querySelectorAll('img').length, prev: sec(3).querySelectorAll('img').length, pdf: (sec(4).innerText.match(/[^\n]+\.pdf/) || [''])[0],
+    vals: [...document.querySelectorAll('input[type=text]')].map(x => x.value).join('|'), pkg: document.querySelector('input[type=checkbox]')?.checked,
+    fmt: (([...document.querySelectorAll('label,span,div')].find(x => x.children.length <= 1 && /^파일 형식/.test((x.innerText || '').trim())) || {}).parentElement || {}).innerText }; };
+KM.create = async (sha, key, code, blob, fname, title) => { const u = await KM.step1(title); const r = await KM.fill(sha, key, code, blob, fname); const pk = await KM.extras(); await KM.S(1000);
+  const st = KM.state(); const sv = await KM.save(); return { u, r, pk, st, sv }; };
 'KM ok';
